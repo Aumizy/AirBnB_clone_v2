@@ -1,12 +1,20 @@
+#!/usr/bin/python3
+"""This module instantiates an object of class FileStorage"""
+
 from models.engine.file_storage import FileStorage
-"""
-Desc:
-    when the application starts or when the models package is imported,
-    a single instance of FileStorage is created.
-    This instance is then accessible throughout the application.
-    This allows different parts of code to use the same storage system.
-"""
+from models.engine.db_storage import DBStorage
+from models.base_model import BaseModel
+from models.user import User
+from models.state import State
+from models.city import City
+from models.amenity import Amenity
+from models.place import Place
+from models.review import Review
+from os import getenv
 
 
-storage = FileStorage()
+if getenv("HBNB_TYPE_STORAGE") == "db":
+    storage = DBStorage()
+else:
+    storage = FileStorage()
 storage.reload()

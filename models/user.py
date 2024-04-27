@@ -1,12 +1,18 @@
 #!/usr/bin/python3
+"""This module defines a class User"""
+from sqlalchemy import Column, Integer, String
+from models.base_model import BaseModel, Base
+from sqlalchemy.orm import relationship
 
-""" This file managers the users personal information """
-from models.base_model import BaseModel
 
-
-class User(BaseModel):
-    """ All users personal information """
-    email = ""
-    password = ""
-    first_name = ""
-    last_name = ""
+class User(BaseModel, Base):
+    """This class defines a user by various attributes"""
+    __tablename__ = "users"
+    email = Column(String(128), nullable=False)
+    password = Column(String(128), nullable=False)
+    first_name = Column(String(128))
+    last_name = Column(String(128))
+    places = relationship("Place", cascade='all, delete, delete-orphan',
+                          backref="user")
+    reviews = relationship("Review", cascade='all, delete, delete-orphan',
+                           backref="user")

@@ -1,49 +1,41 @@
 #!/usr/bin/python3
 """
-    Fabric script that distributes an archive to your web servers,
-    using the function do_deploy
+a fab script that generates a .tgz file from a folder and
+distributes an archive to your web servers
 """
-
 import os
 from fabric.api import *
+from datetime import datetime
 
-
-env.hosts = ["100.25.148.28", "52.86.142.5"]
+env.hosts = ["34.207.222.225", "100.25.2.85"]
 env.user = "ubuntu"
 
 
 def do_pack():
-    """ Generates a tgz archive path """
-    local("mkdir -p versions")
-    date = datetime.now().strftime("%Y%m%d%H%M%S")
-    output = "versions/web_static_{}.tgz".format(date)
-    tgz_archive = local("tar -cvzf {} web_static".format(output))
+    """ a function that clones the repo and pack contents into archive.tgz """
 
-    if tgz_archive.succeeded:
-        return output
-    else:
-        return None
+    local("mkdir -p versions")
+    now = datetime.now()
+    timestamp = now.strftime("%Y%m%d%H%M%S")
+    file = f"versions/web_static_{timestamp}.tgz"
+    result = local(f"tar -cvzf {file} web_static", capture=True)
+    return file
 
 
 def do_deploy(archive_path):
-    """ Distributes an archive totwo specific web servers """
+    """ distributes an archive to your web servers """
     if os.path.exists(archive_path):
-        archive_filename = os.path.basename(archive_path)
-        remote_tmp_path = "/tmp/{}".format(archive_filename)
-        remote_extract_path = "/data/web_static/releases/{}".format(
-            archive_filename[:-4])
-
+        archived_file = archive_path[9:]
+        latest_release = "/data/web_static/releases/" + archived_file[:-4]
+        archived_file = "/tmp/" + archived_file
         put(archive_path, "/tmp/")
-        run("sudo mkdir -p {}".format(remote_extract_path))
-        run("sudo tar -xzf {} -C {}/".format(remote_tmp_path,
-                                             remote_extract_path))
-        run("sudo rm {}".format(remote_tmp_path))
-        run("sudo mv {}/web_static/* {}".format(remote_extract_path,
-                                                remote_extract_path))
-        run("sudo rm -rf {}/web_static".format(remote_extract_path))
-        run("sudo rm -rf /data/web_static/current")
-        run("sudo ln -s {} /data/web_static/current".format(
-            remote_extract_path))
+        run(f"sudo mkdir -p {latest_release}")
+        run(f"sudo tar -xzf {archived_file} -C {latest_release}/")
+        run(f"sudo rm {archived_file}")
+        run(f"sudo mv {latest_release}/web_static/* {latest_release}")
+        run(f"sudo rm -rf {latest_release}/web_static")
+        run(f"sudo rm -rf /data/web_static/current")
+        run(f"sudo ln -s {latest_release} /data/web_static/current")
 
         print("New version deployed!")
         return True
